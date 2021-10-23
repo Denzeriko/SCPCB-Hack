@@ -3,6 +3,7 @@
 void checkButtons(){
     bool isOpened = true;
     bool tglConsole = false;
+
     while (true) {
         if ((GetAsyncKeyState(VK_PRIOR) & 0x8000) && !tglConsole) {
             isOpened = !isOpened;

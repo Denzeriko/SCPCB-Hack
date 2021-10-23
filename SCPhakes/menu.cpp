@@ -1,24 +1,22 @@
 ﻿#include "misc.h"
 
 #define WIN32_LEAN_AND_MEAN
-#define NK_INCLUDE_FIXED_TYPES
-#define NK_INCLUDE_STANDARD_IO
-#define NK_INCLUDE_STANDARD_VARARGS
+//#define NK_INCLUDE_FIXED_TYPES
+//#define NK_INCLUDE_STANDARD_IO
+//#define NK_INCLUDE_STANDARD_VARARGS
 #define NK_INCLUDE_DEFAULT_ALLOCATOR
 #define NK_IMPLEMENTATION
 #define NK_GDI_IMPLEMENTATION
 
-
 #include "nuklear.h"
 #include "nuklear_gdi.h"
 
-#pragma comment(lib, "gdi32.lib")
+
+//#pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "Msimg32.lib")
 
-static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch (msg)
-    {
+static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+    switch (msg) {
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -28,20 +26,35 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
     return DefWindowProcW(wnd, msg, wparam, lparam);
 }
 
+namespace Hakes {
+    extern nk_bool godMode = false;
+    extern nk_bool infAmmo = false;
+    extern nk_bool rapidFire = false;
+    extern nk_bool stamina = false;
+    extern nk_bool rocketAmmo = false;
+    extern nk_bool noBlinking = false;
+}
 
-nk_bool InfAmmo = false;
 bool consolePatched = false;
 HWND MenuHWND;
 
 char DconsoleBuffer[2048] = "Console INIT!\n-------------\nLoaded SCP:CB Hakes\n";
+bool DConsoleInit = false;
 
 void addToDConsole(std::stringstream &what) {
-    //if (sizeof(DconsoleBuffer) / sizeof(*DconsoleBuffer) > 1900)
+    //if (strlen(DconsoleBuffer) > 2000)
     //    memset(DconsoleBuffer, 0, sizeof(DconsoleBuffer)); //clear to prevent overflow xd:XDXDAUSDA*WD)
-    //strcat(DconsoleBuffer, what.str().c_str());
-    //what << sizeof(DconsoleBuffer) / sizeof(*DconsoleBuffer);
+
+    //if (DConsoleInit == false) {
+    //    ZeroMemory(&DconsoleBuffer, sizeof(DconsoleBuffer));
+    //    char DconsoleBuffer[2048] = "Console INIT!\n-------------\nLoaded SCP:CB Hakes\n";
+    //    DConsoleInit = true;
+    //}
+    //if(number_of_lines > 2)
+   //     buf.erase(0, buf.find("\n") + 1); //remove first line
+
     strcat(DconsoleBuffer, what.str().c_str());
-    memset(&what, 0, sizeof(what));
+    what.str("");
 }
 
 void menu() {
@@ -56,7 +69,6 @@ void menu() {
     int running = 1;
     int needs_refresh = 1;
 
-    /* Win32 */
     memset(&wc, 0, sizeof(wc));
     wc.style = CS_DBLCLKS;
     wc.lpfnWndProc = WindowProc;
@@ -67,19 +79,12 @@ void menu() {
     RegisterClassW(&wc);
 
     AdjustWindowRectEx(&rect, style, FALSE, exstyle);
-    MenuHWND = CreateWindowExW(exstyle, wc.lpszClassName, L"DWARE v.0.1 SCP:CB",
-        style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
-        rect.right - rect.left, rect.bottom - rect.top,
-        NULL, NULL, wc.hInstance, NULL);
-    dc = GetDC(MenuHWND);
+    MenuHWND = CreateWindowExW(exstyle, wc.lpszClassName, L"DWARE v.0.1 SCP:CB", style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
+        rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, wc.hInstance, NULL);
 
-    /* GUI */
+    dc = GetDC(MenuHWND);
     font = nk_gdifont_create("Consolas", 16);
     ctx = nk_gdi_init(font, dc, 600, 540);
-
-    ctx->style.slider.show_buttons = true;
-    ctx->style.slider.cursor_size.x = 14;
-    ctx->style.slider.cursor_size.y = 14;
 
     while (running)
     {
@@ -116,27 +121,36 @@ void menu() {
             nk_label(ctx, "", NK_TEXT_LEFT);
 
             nk_layout_row_static(ctx, 30, 120, 1);
-            if (nk_button_label(ctx, "Patch Console") && consolePatched == false) {
-                consolePatched = true;
-                CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)patchConsole, NULL, NULL, NULL);
+            if (nk_button_label(ctx, "Patch Console")) {
+                if (consolePatched == false) {
+                    consolePatched = true;
+                    CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)patchConsole, NULL, NULL, NULL);
+                }
+                else {
+                    std::stringstream asd;
+                    asd << "Console already patched!\n";
+                    addToDConsole(asd);
+                }
             }
 
             nk_layout_row_static(ctx, 20, 120, 2);
-            nk_checkbox_label(ctx, "Inf. ammo", &InfAmmo);
-            nk_checkbox_label(ctx, "God Mode", &InfAmmo);
-            nk_checkbox_label(ctx, "Noclip", &InfAmmo);
+            nk_checkbox_label(ctx, "Inf. ammo", &Hakes::infAmmo);
+            nk_checkbox_label(ctx, "Inf. stamina", &Hakes::stamina);
+            nk_checkbox_label(ctx, "God Mode", &Hakes::godMode);
+            nk_checkbox_label(ctx, "Rapid Fire", &Hakes::rapidFire);
+            nk_checkbox_label(ctx, "Rocket Ammo", &Hakes::rocketAmmo);
+            nk_checkbox_label(ctx, "No blinking", &Hakes::noBlinking);
 
             nk_layout_row_static(ctx, 30, 120, 1);
             nk_label(ctx, "Console:\n", NK_TEXT_LEFT);
 
-            nk_layout_row_static(ctx, 260, 380, 1);
+            nk_layout_row_static(ctx, 250, 380, 1);
             int sz = (int)sizeof(DconsoleBuffer) - 1;
             nk_edit_string(ctx, NK_EDIT_BOX, DconsoleBuffer, &sz, 2048, nk_filter_default);
+            //ctx->current->edit.scrollbar.y = (nk_uint)25;
         }
 
         nk_end(ctx);
-
-        /* Draw */
         nk_gdi_render(nk_rgb(30, 30, 130));
     }
     nk_gdifont_del(font);
