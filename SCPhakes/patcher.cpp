@@ -90,12 +90,12 @@ void WeaponHacks(DWORD pWeapon)
             if (bRocketAmmo)
             {
                 Weapons.at(index).Default();
+                Weapons.at(index).m_pBaseWeapon->m_fCanShoot = 1;
             }
 
             bRocketAmmo = false;
         }
 
-       // Weapons.at(index).m_pBaseWeapon->m_iProjectileType = Hakes::rocketAmmo ? eProjectileType::ROCKET : m_pDefaultInfo->m_iPrimaryAmmo;
     }
 
     else
