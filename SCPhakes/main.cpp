@@ -1,5 +1,11 @@
 #include "misc.h"
 
+/*TODO*/
+/*
+    1. Fix fucking scrollbar Y \ edit nuklear.h ffs shit code without api moron.
+    2. Make overlay on dx7 :( le pook
+*/
+
 void checkButtons(){
     bool isOpened = true;
     bool tglConsole = false;
@@ -16,7 +22,7 @@ void checkButtons(){
 
 int main() {
     CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)menu, NULL, NULL, NULL);
-    CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)checkButtons, NULL, NULL, NULL);
+    CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)checkButtons, NULL, NULL, NULL); //useless?
     return 1;
 }
 

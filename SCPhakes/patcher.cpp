@@ -24,13 +24,12 @@ DWORD scanner()
     return (DWORD)0x0;
 }
 
-
 void patchConsole() {
     //StaticPatcher::Miscellaneous::OpenConsole();
     DWORD scan = scanner();
     std::stringstream msg;
 
-    msg << "VM: " << scan << "\n";
+    msg << "VM: 0x" << scan << "\n";
     addToDConsole(msg);
     const char* ConsolePattern[2] =
     { "\x0F\x85\x00\x00\x00\x00\x81\xEC\x0C\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x89\x04\x24\xE8\x00\x00\x00\x00\x89\x04\x24\xC7\x44\x24\x04\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\x00\x21\xC0\x0F\x84",
@@ -45,7 +44,7 @@ void patchConsole() {
     }
     BYTE patch[3] = { 0x0F, 0x84, 0x95 };
 
-    msg << "SCP:CB console patched! " << Offset << "\n";
+    msg << "SCP:CB console patched! 0x" << Offset << "\n";
     addToDConsole(msg);
     StaticPatcher::Patching::WriteBytes(patch, Offset, sizeof(patch));
 
@@ -84,8 +83,8 @@ void patchConsole() {
     DWORD* DerefLocalPlayerPtr = *(DWORD**)LocalPlayerPtr;
     DWORD DerefWeaponPtr = **(DWORD**)WeaponPtr;
 
-    msg << "WeaponPtr: " << DerefWeaponPtr << "\n";
-    msg << "LocalPlayerPtr: " << DerefLocalPlayerPtr << "\n";
+    msg << "WeaponPtr: 0x" << DerefWeaponPtr << "\n";
+    msg << "LocalPlayerPtr: 0x" << DerefLocalPlayerPtr << "\n";
     addToDConsole(msg);
 
     bool tglNoclip = false; //fix later this cum omg pls kill me AW(D(AWD(W
@@ -93,7 +92,6 @@ void patchConsole() {
     *DerefNoclipPtr = 0;
     while (true)
     {
-        //
         if ((GetAsyncKeyState(0x56) & 0x8000) && !tglNoclip) {
             tglNoclip2 = !tglNoclip2;
             //msg << "NOCLIP: " << (tglNoclip2 ? "ON" : "OFF") << "\n"; //uncomment then ill fix fucking addToDConsole overflow :( and scrollbar
@@ -106,14 +104,14 @@ void patchConsole() {
         if (DerefWeaponPtr != **(DWORD**)WeaponPtr)
         {
             DerefWeaponPtr = **(DWORD**)WeaponPtr;
-            msg << "WeaponPtr: " << (DWORD)DerefWeaponPtr << "\n";
+            msg << "WeaponPtr: 0x" << (DWORD)DerefWeaponPtr << "\n";
             addToDConsole(msg);
         }
 
         if (DerefLocalPlayerPtr != *(DWORD**)LocalPlayerPtr)
         {
             DerefLocalPlayerPtr = *(DWORD**)LocalPlayerPtr;
-            msg << "LocalPlayerPtr: " << DerefLocalPlayerPtr << "\n";
+            msg << "LocalPlayerPtr: 0x" << DerefLocalPlayerPtr << "\n";
             addToDConsole(msg);
         }
 
@@ -139,10 +137,9 @@ void patchConsole() {
             if(Hakes::infAmmo)
                 BWP->m_iMagazines = 9999;
 
-            BWP->m_iProjectileType = Hakes::rocketAmmo ? 4 : 1; //bruh
+            BWP->m_iProjectileType = Hakes::rocketAmmo ? 4 : 1; //bruh //will ruin every weapon :(
             //if (Hakes::rocketAmmo)
-            //    BWP->m_iProjectileType = 4; //found how to gather default value bruh
-                 //found how to gather default value bruh
+            //    BWP->m_iProjectileType = 4; //need to found how to gather default value bruh
         }
         Sleep(5);
     }

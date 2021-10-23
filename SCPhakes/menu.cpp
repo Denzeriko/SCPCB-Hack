@@ -51,10 +51,14 @@ void addToDConsole(std::stringstream &what) {
     //    DConsoleInit = true;
     //}
     //if(number_of_lines > 2)
-   //     buf.erase(0, buf.find("\n") + 1); //remove first line
+    //    buf.erase(0, buf.find("\n") + 1); //remove first line
 
     strcat(DconsoleBuffer, what.str().c_str());
     what.str("");
+}
+
+void clearToDConsole() {
+    ZeroMemory(&DconsoleBuffer, sizeof(DconsoleBuffer));
 }
 
 void menu() {
@@ -79,7 +83,7 @@ void menu() {
     RegisterClassW(&wc);
 
     AdjustWindowRectEx(&rect, style, FALSE, exstyle);
-    MenuHWND = CreateWindowExW(exstyle, wc.lpszClassName, L"DWARE v.0.1 SCP:CB", style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
+    MenuHWND = CreateWindowExW(exstyle, wc.lpszClassName, L"DWARE v.0.2a SCP:CB", style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
         rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, wc.hInstance, NULL);
 
     dc = GetDC(MenuHWND);
@@ -117,7 +121,7 @@ void menu() {
             nk_layout_row_static(ctx, 10, 380, 1);
             nk_label(ctx, "", NK_TEXT_LEFT);
             nk_label(ctx, u8"█▀▄ █░█░█ ▄▀█ █▀█ █▀▀", NK_TEXT_LEFT);
-            nk_label(ctx, u8"█▄▀ ▀▄▀▄▀ █▀█ █▀▄ ██▄ v.0.1 SCP:CB", NK_TEXT_LEFT);
+            nk_label(ctx, u8"█▄▀ ▀▄▀▄▀ █▀█ █▀▄ ██▄ v.0.2a SCP:CB", NK_TEXT_LEFT);
             nk_label(ctx, "", NK_TEXT_LEFT);
 
             nk_layout_row_static(ctx, 30, 120, 1);
@@ -138,16 +142,26 @@ void menu() {
             nk_checkbox_label(ctx, "Inf. stamina", &Hakes::stamina);
             nk_checkbox_label(ctx, "God Mode", &Hakes::godMode);
             nk_checkbox_label(ctx, "Rapid Fire", &Hakes::rapidFire);
-            nk_checkbox_label(ctx, "Rocket Ammo", &Hakes::rocketAmmo);
             nk_checkbox_label(ctx, "No blinking", &Hakes::noBlinking);
+
+            nk_layout_row_static(ctx, 20, 120, 1);
+            nk_label(ctx, "Experemental:", NK_TEXT_LEFT);
+
+            nk_layout_row_static(ctx, 20, 120, 2);
+            nk_checkbox_label(ctx, "Rocket Ammo", &Hakes::rocketAmmo);
+            
 
             nk_layout_row_static(ctx, 30, 120, 1);
             nk_label(ctx, "Console:\n", NK_TEXT_LEFT);
 
-            nk_layout_row_static(ctx, 250, 380, 1);
+            nk_layout_row_static(ctx, 220, 380, 1);
             int sz = (int)sizeof(DconsoleBuffer) - 1;
-            nk_edit_string(ctx, NK_EDIT_BOX, DconsoleBuffer, &sz, 2048, nk_filter_default);
+            nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_NO_CURSOR | NK_EDIT_CLIPBOARD | NK_EDIT_MULTILINE | NK_EDIT_READ_ONLY, DconsoleBuffer, &sz, 2048, nk_filter_default); //nuklear.h 27084 fix \ rewrite this shit pls.
             //ctx->current->edit.scrollbar.y = (nk_uint)25;
+
+            ctx->current->edit.active = nk_true; //fucking moron.
+            if (ctx->text_edit.scrollbar.y > 7000) // prevent leak shit fix, but work
+                clearToDConsole();
         }
 
         nk_end(ctx);

@@ -27080,6 +27080,9 @@ nk_edit_string(struct nk_context *ctx, nk_flags flags,
     win = ctx->current;
     hash = win->edit.seq;
     edit = &ctx->text_edit;
+
+    win->edit.scrollbar.y = 7000; //denzfix fix later pls god
+
     nk_textedit_clear_state(&ctx->text_edit, (flags & NK_EDIT_MULTILINE)?
         NK_TEXT_EDIT_MULTI_LINE: NK_TEXT_EDIT_SINGLE_LINE, filter);
 
