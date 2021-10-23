@@ -33,6 +33,7 @@ namespace Hakes {
     extern nk_bool stamina = false;
     extern nk_bool rocketAmmo = false;
     extern nk_bool noBlinking = false;
+    extern int     speedhack = 1;
 }
 
 bool consolePatched = false;
@@ -66,7 +67,7 @@ void menu() {
     struct nk_context* ctx;
 
     WNDCLASSW wc;
-    RECT rect = { 0, 0, 600, 460 };
+    RECT rect = { 0, 0, 600, 640 };
     DWORD style = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX);//WS_OVERLAPPEDWINDOW;
     DWORD exstyle = WS_EX_APPWINDOW;
     HDC dc;
@@ -88,7 +89,11 @@ void menu() {
 
     dc = GetDC(MenuHWND);
     font = nk_gdifont_create("Consolas", 16);
-    ctx = nk_gdi_init(font, dc, 600, 540);
+    ctx = nk_gdi_init(font, dc, 600, 640);
+
+    ctx->style.slider.show_buttons = false;
+    ctx->style.slider.cursor_size.x = 6;
+    ctx->style.slider.cursor_size.y = 14;
 
     while (running)
     {
@@ -116,7 +121,7 @@ void menu() {
         nk_input_end(ctx);
 
         /* GUI */
-        if (nk_begin(ctx, "", nk_rect(0, 0, 600, 540), 0x0))
+        if (nk_begin(ctx, "", nk_rect(0, 0, 600, 640), 0x0))
         {
             nk_layout_row_static(ctx, 10, 380, 1);
             nk_label(ctx, "", NK_TEXT_LEFT);
@@ -145,16 +150,20 @@ void menu() {
             nk_checkbox_label(ctx, "No blinking", &Hakes::noBlinking);
 
             nk_layout_row_static(ctx, 20, 120, 1);
-            nk_label(ctx, "Experemental:", NK_TEXT_LEFT);
+            nk_label(ctx, "Experimental:", NK_TEXT_LEFT);
 
             nk_layout_row_static(ctx, 20, 120, 2);
             nk_checkbox_label(ctx, "Rocket Ammo", &Hakes::rocketAmmo);
-            
+
+            nk_layout_row_static(ctx, 10, 240, 1);
+            std::string spd = "Speedhack: " + std::to_string(Hakes::speedhack);
+            nk_label(ctx, spd.c_str(), NK_TEXT_CENTERED);
+            nk_slider_int(ctx, 1, &Hakes::speedhack, 20, 1);
 
             nk_layout_row_static(ctx, 30, 120, 1);
-            nk_label(ctx, "Console:\n", NK_TEXT_LEFT);
+            nk_label(ctx, "Console:", NK_TEXT_LEFT);
 
-            nk_layout_row_static(ctx, 220, 380, 1);
+            nk_layout_row_static(ctx, 210, 380, 1);
             int sz = (int)sizeof(DconsoleBuffer) - 1;
             nk_edit_string(ctx, NK_EDIT_SIMPLE | NK_EDIT_NO_CURSOR | NK_EDIT_CLIPBOARD | NK_EDIT_MULTILINE | NK_EDIT_READ_ONLY, DconsoleBuffer, &sz, 2048, nk_filter_default); //nuklear.h 27084 fix \ rewrite this shit pls.
             //ctx->current->edit.scrollbar.y = (nk_uint)25;

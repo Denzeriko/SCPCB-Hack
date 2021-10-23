@@ -11,6 +11,7 @@ namespace Hakes {
 	extern nk_bool stamina;
 	extern nk_bool rocketAmmo;
 	extern nk_bool noBlinking;
+	extern int speedhack;
 }
 
 void menu();

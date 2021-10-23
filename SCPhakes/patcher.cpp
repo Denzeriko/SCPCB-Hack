@@ -1,4 +1,7 @@
 #include "patcher.h"
+#include <vector>
+#define NOT_FOUND -1
+DWORD SpeedhackFactorJMP = 0x0;
 
 DWORD scanner()
 {
@@ -24,12 +27,128 @@ DWORD scanner()
     return (DWORD)0x0;
 }
 
-void patchConsole() {
-    //StaticPatcher::Miscellaneous::OpenConsole();
+void WeaponHacks(DWORD pWeapon)
+{
+    static std::vector<CBaseWeapon> Weapons;
+    static bool bRapidFire = Hakes::rapidFire;
+    static bool bInfiniteAmmo = Hakes::infAmmo;
+    static bool bRocketAmmo = Hakes::rocketAmmo;
+
+
+    int index = NOT_FOUND;
+    if (Weapons.size() > 0)
+    {
+        for (int i = 0; i < Weapons.size(); i++)
+        {
+            if (Weapons.at(i).GetAddress() == pWeapon)
+            {
+                index = i;
+            }
+        }
+
+        if (index == NOT_FOUND)
+        {
+            Weapons.push_back(CBaseWeapon((CBaseWeaponInfo*)pWeapon));
+            index = Weapons.size() - 1;
+        }
+
+        if (Hakes::rapidFire)
+        {
+            Weapons.at(index).m_pBaseWeapon->m_fRateOfFire = 0;
+        }
+
+        else
+        {
+            Weapons.at(index).m_pBaseWeapon->m_fRateOfFire = Weapons.at(index).m_pDefaultInfo->m_fRateOfFire;
+        }
+
+        if (Hakes::infAmmo)
+        {
+            bInfiniteAmmo = Hakes::infAmmo;
+            Weapons.at(index).m_pBaseWeapon->m_iPrimaryAmmo = 1337;
+            Weapons.at(index).m_pBaseWeapon->m_iMagazines = 1337;
+        }
+
+        else
+        {
+            if (bInfiniteAmmo)
+            {
+                Weapons.at(index).m_pBaseWeapon->m_iPrimaryAmmo = Weapons.at(index).m_pDefaultInfo->m_iPrimaryAmmo;
+                Weapons.at(index).m_pBaseWeapon->m_iMagazines = Weapons.at(index).m_pDefaultInfo->m_iMagazines;
+            }
+            bInfiniteAmmo = false;
+        }
+
+        if (Hakes::rocketAmmo)
+        {
+            bRocketAmmo = Hakes::rocketAmmo;
+            Weapons.at(index).m_pBaseWeapon->m_iProjectileType = eProjectileType::ROCKET;
+        }
+
+        else
+        {
+            if (bRocketAmmo)
+            {
+                Weapons.at(index).Default();
+            }
+
+            bRocketAmmo = false;
+        }
+
+       // Weapons.at(index).m_pBaseWeapon->m_iProjectileType = Hakes::rocketAmmo ? eProjectileType::ROCKET : m_pDefaultInfo->m_iPrimaryAmmo;
+    }
+
+    else
+    {
+        Weapons.push_back(CBaseWeapon((CBaseWeaponInfo*)pWeapon));
+    }
+}
+
+__declspec(naked) void ASM_Speedhack()
+{
+    __asm
+    {
+        add eax, Hakes::speedhack
+        jmp SpeedhackFactorJMP
+    }
+}
+
+void patchSpeed(DWORD scan)
+{
+    BYTE JNE[1] = { 0x85 };
+    const char* ShakePtrPattern[2] =
+    {
+        "\x0F\x84\x00\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x53\xD9\x04\x24\x5B\x8B\x00\x00\x00\x00\x00\x56\xD9\x04\x24\x5E\xDE\xC1\x53\xD9\x1C\x24\x5B\x89\x00\x00\x00\x00\x00\x81\xEC\x04\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x50\xD9\x04\x24\x58\xBB\x00\x00\x00\x00\x53\xD9\x04\x24\x5B\xDE\xF9\x50\xD9\x1C\x24\x58\x89\x04\x24\xE8\x00\x00\x00\x00\x8B",
+        "xx????x?????xxxxxx?????xxxxxxxxxxxxx?????xxxxxxx?????xxxxxx????xxxxxxxxxxxxxxxx????x"
+    };
+
+    const char* FastMovePtrPattern[2] =
+    {
+        "\x0F\x84\x00\x00\x00\x00\x81\xEC\x18\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x89\x04\x24\xE8\x00\x00\x00\x00\x89\x04\x24\xC7\x44\x24\x04\x64\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\x00\xC1\xE0\x02\x03\x00\x00\x00\x00\x00\x8B\x00\x89\x04\x24\xE8\x00\x00\x00\x00\x89\x04\x24\xC7\x44\x24\x04\xB4\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\x00\x3D\x05\x00\x00\x00\x0F\x94\xD0\x0F\xB6\xC0\x69\xC0\x06\x00\x00\x00",
+        "xx????xxxxxxx?????xxxx????xxxxxxxxxxxx????xxxxxx?????xxxxxx????xxxxxxxxxxxx????xxxxxxxxxxxxxxxxxxx"
+    };
+
+    const char* SpeedFactorPtrPattern[2] =
+    {
+        "\x05\x03\x00\x00\x00\x50\xDB\x04\x24\x58\x8B\x5D\xF8\x53\xD9\x04\x24\x5B\xDE\xC9\x53\xD9\x1C\x24\x5B\x89\x5D\xF8\x81\xEC\x18\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x89\x04\x24\xE8\x00\x00\x00\x00\x89\x04\x24\xC7\x44\x24\x04\x64\x00\x00\x00",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?????xxxx????xxxxxxxxxxx"
+    };
+
+    DWORD ShakeOffset = StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)ShakePtrPattern[0], (char*)ShakePtrPattern[1]) + 0x1;
+    DWORD FastMoveOffset = StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)FastMovePtrPattern[0], (char*)FastMovePtrPattern[1]) + 0x1;
+    DWORD SpeedFactorOffset = StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)SpeedFactorPtrPattern[0], (char*)SpeedFactorPtrPattern[1]);
+    SpeedhackFactorJMP = SpeedFactorOffset + 0x5;
+    StaticPatcher::Patching::WriteBytes(JNE, ShakeOffset, sizeof(JNE));
+    StaticPatcher::Patching::WriteBytes(JNE, FastMoveOffset, sizeof(JNE));
+    StaticPatcher::Patching::CreateWarp((BYTE*)SpeedFactorOffset, (DWORD)ASM_Speedhack, 5);
+}
+
+void patchConsole() 
+{
     DWORD scan = scanner();
     std::stringstream msg;
 
-    msg << "VM: 0x" << scan << "\n";
+    msg << "VM: 0x" << std::hex << scan << "\n";
     addToDConsole(msg);
     const char* ConsolePattern[2] =
     { "\x0F\x85\x00\x00\x00\x00\x81\xEC\x0C\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x89\x04\x24\xE8\x00\x00\x00\x00\x89\x04\x24\xC7\x44\x24\x04\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x8B\x00\x21\xC0\x0F\x84",
@@ -44,7 +163,7 @@ void patchConsole() {
     }
     BYTE patch[3] = { 0x0F, 0x84, 0x95 };
 
-    msg << "SCP:CB console patched! 0x" << Offset << "\n";
+    msg << "SCP:CB console patched! 0x" << std::hex << Offset << "\n";
     addToDConsole(msg);
     StaticPatcher::Patching::WriteBytes(patch, Offset, sizeof(patch));
 
@@ -72,24 +191,34 @@ void patchConsole() {
         "x?????xxxx????xxxxxxxxx????xx????????xx????????xx????????xx????????xxxxxx"
     };
 
+    const char* GodmodePtrPattern[2] =
+    {
+        "\x81\x3D\x00\x00\x00\x00\x00\x00\x00\x00\x89\xF0\x0F\x94\xD0\x0F\xB6\xC0\x89\xC6\x8B\x85\xDC\xFE\xFF\xFF\x21\xF3\x21\xC3\x21\xDB\x0F\x84\x00\x00\x00\x00\x81\xEC\x24\x00\x00\x00\x8B\x00\x00\x00\x00\x00\x89\x04\x24\xE8",
+        "xx????????xxxxxxxxxxxxxxxxxxxxxxxx????xxxxxxx?????xxxx"
+    };
+
     FreeConsole();
 
     DWORD* WeaponPtr = (DWORD*)(StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)WeaponPtrPattern[0], (char*)WeaponPtrPattern[1]) + 0x2);
     DWORD* LocalPlayerPtr = (DWORD*)(StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)LocalPlayerPtrPattern[0], (char*)LocalPlayerPtrPattern[1]) + 0x2);
     DWORD* CameraFogFarPtr = (DWORD*)(StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)CameraFogFarPtrPattern[0], (char*)CameraFogFarPtrPattern[1]) + 0x2);
     DWORD* NoclipPtr = (DWORD*)(StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)NoclipPtrPattern[0], (char*)NoclipPtrPattern[1]) + 0x2);
+    DWORD* GodmodePtr = (DWORD*)(StaticPatcher::SearchOffset::FindPattern(scan, (DWORD)(scan + (DWORD)4194304), (PBYTE)GodmodePtrPattern[0], (char*)GodmodePtrPattern[1]) + 0x2);
     float* DerefCameraFogFarPtr = *(float**)CameraFogFarPtr;
     int* DerefNoclipPtr = *(int**)NoclipPtr;
+    int* DerefGodmodePtr = *(int**)GodmodePtr;
     DWORD* DerefLocalPlayerPtr = *(DWORD**)LocalPlayerPtr;
     DWORD DerefWeaponPtr = **(DWORD**)WeaponPtr;
 
-    msg << "WeaponPtr: 0x" << DerefWeaponPtr << "\n";
-    msg << "LocalPlayerPtr: 0x" << DerefLocalPlayerPtr << "\n";
+    msg << "WeaponPtr: 0x" << std::hex << DerefWeaponPtr << "\n";
+    msg << "LocalPlayerPtr: 0x" << std::hex << DerefLocalPlayerPtr << "\n";
     addToDConsole(msg);
 
     bool tglNoclip = false; //fix later this cum omg pls kill me AW(D(AWD(W
     bool tglNoclip2 = false;
     *DerefNoclipPtr = 0;
+    
+    patchSpeed(scan);
     while (true)
     {
         if ((GetAsyncKeyState(0x56) & 0x8000) && !tglNoclip) {
@@ -99,47 +228,42 @@ void patchConsole() {
             *DerefNoclipPtr = tglNoclip2 ? 0 : 1;
         }
         tglNoclip = (GetAsyncKeyState(0x56) & 0x8000);
-
         *DerefCameraFogFarPtr = 1000.0f;
         if (DerefWeaponPtr != **(DWORD**)WeaponPtr)
         {
             DerefWeaponPtr = **(DWORD**)WeaponPtr;
-            msg << "WeaponPtr: 0x" << (DWORD)DerefWeaponPtr << "\n";
+            msg << "WeaponPtr: 0x" << std::hex << (DWORD)DerefWeaponPtr << "\n";
             addToDConsole(msg);
         }
 
         if (DerefLocalPlayerPtr != *(DWORD**)LocalPlayerPtr)
         {
             DerefLocalPlayerPtr = *(DWORD**)LocalPlayerPtr;
-            msg << "LocalPlayerPtr: 0x" << DerefLocalPlayerPtr << "\n";
+            msg << "LocalPlayerPtr: 0x" << std::hex << DerefLocalPlayerPtr << "\n";
             addToDConsole(msg);
         }
 
         if (DerefLocalPlayerPtr != NULL)
         {
-            LocalPlayer* LPDP = (LocalPlayer*)DerefLocalPlayerPtr;
+            LocalPlayerInfo* LPDP = (LocalPlayerInfo*)DerefLocalPlayerPtr;
+            *DerefGodmodePtr = Hakes::godMode ? 1 : 0;
+
             if (Hakes::godMode)
+            {
                 LPDP->m_fBloodloss = 0.0f;
                 LPDP->m_fInjuries = 0.0f;
+            }
+
             if (Hakes::noBlinking)
                 LPDP->m_fBlinkTimer = 600.0f;
+
             if (Hakes::stamina)
                 LPDP->m_fStamina = 100.0f;
         }
 
         if (DerefWeaponPtr != NULL)
         {
-            BaseWeapon* BWP = (BaseWeapon*)DerefWeaponPtr;
-            if(Hakes::rapidFire)
-                BWP->m_fRateOfFire = 0;
-            if (Hakes::infAmmo) 
-                BWP->m_iPrimaryAmmo = 9999;
-            if(Hakes::infAmmo)
-                BWP->m_iMagazines = 9999;
-
-            BWP->m_iProjectileType = Hakes::rocketAmmo ? 4 : 1; //bruh //will ruin every weapon :(
-            //if (Hakes::rocketAmmo)
-            //    BWP->m_iProjectileType = 4; //need to found how to gather default value bruh
+            WeaponHacks(DerefWeaponPtr);
         }
         Sleep(5);
     }

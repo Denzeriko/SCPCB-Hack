@@ -10,7 +10,19 @@ typedef enum _MEMORY_INFORMATION_CLASS
     MemoryBasicVlmInformation
 } MEMORY_INFORMATION_CLASS;
 
-class BaseWeapon
+
+enum eProjectileType
+{
+    UNKNOWN,
+    MP5SD,
+    P90,
+    USP,
+    ROCKET,
+    MINIGUN,
+    GRENADE
+};
+
+class CBaseWeaponInfo
 {
 public:
     char pad_0000[16]; //0x0000
@@ -41,7 +53,7 @@ public:
     int32_t m_iUnknownDef10; //0x0090
 }; //Size: 0x0094
 
-class LocalPlayer
+class LocalPlayerInfo
 {
 public:
     float m_fDeathTimer; //0x0000
@@ -54,6 +66,66 @@ public:
     float m_fInjuries; //0x0094
     float m_fBloodloss; //0x0098
     char pad_009C[40]; //0x009C
+};
+
+class CBaseWeapon
+{
+private:
+    DWORD m_pWeapon = 0x0;
+public:
+    CBaseWeaponInfo* m_pDefaultInfo;
+    CBaseWeaponInfo* m_pBaseWeapon;
+    CBaseWeapon(CBaseWeaponInfo* pBaseWeapon)
+    {
+        m_pDefaultInfo = new CBaseWeaponInfo;
+        m_pBaseWeapon = pBaseWeapon;
+        m_pWeapon = (DWORD)pBaseWeapon;
+        memcpy(m_pDefaultInfo, pBaseWeapon, sizeof(CBaseWeaponInfo));
+    }
+
+    /*
+    ~CBaseWeapon()
+    {
+        if(m_pDefaultInfo != NULL)
+            delete m_pDefaultInfo;
+    }
+    */
+
+    void Default()
+    {
+        memcpy(m_pBaseWeapon, m_pDefaultInfo, sizeof(CBaseWeaponInfo));
+    }
+
+    DWORD GetAddress()
+    {
+        return m_pWeapon;
+    }
+
+    void ResetRateOfFire()
+    {
+        m_pBaseWeapon->m_fRateOfFire = m_pDefaultInfo->m_fRateOfFire;
+    }
+
+    void ResetProjectileType()
+    {
+        m_pBaseWeapon->m_iProjectileType = m_pDefaultInfo->m_iProjectileType;
+    }
+
+    void ResetFireSound()
+    {
+        m_pBaseWeapon->m_fFireSound = m_pDefaultInfo->m_fFireSound;
+    }
+
+    void ResetReloadSound()
+    {
+        m_pBaseWeapon->m_fReloadSound = m_pDefaultInfo->m_fReloadSound;
+    }
+
+    void ResetEmptySound()
+    {
+        m_pBaseWeapon->m_fEmptySound = m_pDefaultInfo->m_fEmptySound;
+    }
+
 };
 
 typedef NTSTATUS(NTAPI* pNtQueryVirtualMemory)(IN HANDLE ProcessHandle, IN PVOID BaseAddress, IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
